@@ -295,9 +295,9 @@
                 </div>
                 <div style="border-left: solid 1px gray">
                     <div>
-                        <textarea class="form-control" style="width: 276px; height: 400px" id="exampleFormControlTextArea1" rows="5"></textarea>
+                        <textarea id="input_feed_content" class="form-control" style="width: 276px; height: 400px" id="exampleFormControlTextArea1" rows="5"></textarea>
                     </div>    
-                    <button type="button" class="btn btn-primary" style="width: 100%;">
+                    <button id="feed_create_button" type="button" class="btn btn-primary" style="width: 100%;">
                         공유하기
                     </button>
                 </div>
@@ -309,6 +309,8 @@
 
 <!-- Optional JavaScript; choose one of the two! -->
 <script>
+    
+    let files
     
     $('#nav_bar_add_box').click(function () {
         $('#first_modal').css({
@@ -348,7 +350,7 @@
         e.preventDefault();
 
         e.dataTransfer = e.originalEvent.dataTransfer; //2
-        var files = e.target.files || e.dataTransfer.files;
+        files = e.target.files || e.dataTransfer.files;
 
         if (files.length > 1) {
             alert('하나만 올려라.');
@@ -362,6 +364,18 @@
             });
             $('#second_modal').css({
                 display: 'flex'
+            });
+            
+            $('#feed_create_button').click(function (){
+                alert('공유하기 눌렀다')
+                
+                let file = files[0];
+                let image =files[0].name;
+                let content = $('#input_feed_content').val();
+                let user_id ='dong.98';
+                let profile_image ="http://www.instagram.com/static/images/web/mobile_nav_type_logo-2x.png/1b47f9d0e595.png";
+                
+                $.ajax()
             });
             
             $('.img_upload_space').css({
