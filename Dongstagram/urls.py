@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from .views import Sub
 from content.views import Main, UploadFeed
 from .settings import MEDIA_ROOT, MEDIA_URL
@@ -24,7 +24,8 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('main/', Main.as_view()),
-    path('content/upload', UploadFeed.as_view()),
+    path('content/', include('content.urls')),
+    path('user/', include('user.urls')),
 ]
 
 # 이미지 데이터는 media 파일에 저장되고 데이터베이스에는 주소값만 저장되는데 아래 셋팅을 해놓아야 media에서 이미지를 조회할 수 있다.
