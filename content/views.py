@@ -4,6 +4,7 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Feed
+from user.models import User
 import os
 from Dongstagram.settings import MEDIA_ROOT
 
@@ -12,7 +13,16 @@ class Main(APIView):
     def get(self, request):
         feed_list = Feed.objects.all().order_by('-id')
 
-        return render(request,"Dongstagram/main.html",{"feed_list":feed_list})
+        print('로그인한 사용자:', request.session['email'])
+        email = request.session['email']
+        if email is None: # 로그인을 안한 상태로 접속했을 때
+            return render(request, "user/login.html")
+        user = User.objects.filter(email=email).first()
+
+        if user is None:# 이메일 주소는 있는데 우리 회원이 아닐 때
+            return render(request, "user/login.html") # 그러면 로그인 다시해
+
+        return render(request,"Dongstagram/main.html",{"feed_list":feed_list, "user" : user})
 
 
 class UploadFeed(APIView):
