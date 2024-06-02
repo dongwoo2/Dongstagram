@@ -13,10 +13,12 @@ class Main(APIView):
     def get(self, request):
         feed_list = Feed.objects.all().order_by('-id')
 
-        print('로그인한 사용자:', request.session['email'])
-        email = request.session['email']
+#        print('로그인한 사용자:', request.session['email'])
+        email = request.session.get('email', None)
+
         if email is None: # 로그인을 안한 상태로 접속했을 때
             return render(request, "user/login.html")
+
         user = User.objects.filter(email=email).first()
 
         if user is None:# 이메일 주소는 있는데 우리 회원이 아닐 때
@@ -45,3 +47,18 @@ class UploadFeed(APIView):
 
         Feed.objects.create(image=image,content=content,user_id=user_id,profile_image=profile_image,like_count=0)
         return Response(status=200)
+
+
+class Profile(APIView):
+    def get(self, request):
+        email = request.session.get('email', None)
+
+        if email is None: # 로그인을 안한 상태로 접속했을 때
+            return render(request, "user/login.html")
+
+        user = User.objects.filter(email=email).first()
+
+        if user is None:# 이메일 주소는 있는데 우리 회원이 아닐 때
+            return render(request, "user/login.html") # 그러면 로그인 다시해
+
+        return render(request, "content/profile.html", {"user":user})
