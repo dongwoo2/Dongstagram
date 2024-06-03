@@ -127,19 +127,27 @@
                 </div>
                 <div style="margin:0 20px;display: flex; flex-direction: row; justify-content: space-between">
                     <div>
-                        <span class="material-symbols-outlined">favorite</span>
-                        <span class="material-icons-outlined">comment</span>
-                        <span class="material-icons-outlined">send</span>
+                        <span id="favorite_{{ feed.id }}" feed_id="{{ feed.id }}" class="favorite material-icons-outlined" style="color: red; cursor: pointer">{% if feed.is_liked %}
+                            favorite{% else %}favorite_border{% endif %}</span>
                     </div>
                     <div>
-                        <span class="material-icons-outlined">bookmark_border</span>
+                        <span id="bookmark_{{ feed.id }}" feed_id="{{ feed.id }}" class="bookmark material-icons-outlined" style="cursor: pointer;">
+                            {% if feed.is_marked %}
+                            bookmark
+                            {% else %}
+                            bookmark_border
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
                 <div style="margin:0 20px;text-align: left; font-size: 14px"> 춘식이 <b>{{ feed.like_count }}명</b>이 좋아합니다.</div>
-                <div style="margin:0 20px;text-align: left; font-size: 16px"><b>{{ feed.user_id }}</b> {{ feed.content }}</div>
-                {% for reply in feed.reply_list %} <!-- feed 안에 reply리스트가 있는데 그걸 하나씩 reply로 꺼내준다 -->
-                    <div style="margin:0 20px;text-align: left; font-size: 14px"><b>{{ reply.nickname }} </b>{{ reply.reply_content }}</div>
-                {% endfor %}
+                <div style="margin:0 20px;text-align: left; font-size: 16px"><b>{{ feed.nickname }}</b> {{ feed.content }}</div>
+                <div id ="reply_list_{{ feed.id }}">
+                    {% for reply in feed.reply_list %} <!-- feed 안에 reply리스트가 있는데 그걸 하나씩 reply로 꺼내준다 -->
+                        <div style="margin:0 20px;text-align: left; font-size: 14px">
+                            <b>{{ reply.nickname }} </b>{{ reply.reply_content }}</div>
+                    {% endfor %}
+                </div>
 
 
                 <div style="display: flex; flex-direction: row;align-items: center; border-top: solid 1px gray">
@@ -337,10 +345,76 @@
 <!-- Optional JavaScript; choose one of the two! -->
 <script>
 
+    $('.bookmark').click(function (e){
+        let feed_id = e.target.attributes.getNamedItem('feed_id').value;
+        let bookmark_id = e.target.id;
+        let bookmark_text = $.trim($('#'+bookmark_id).html());
+        if(bookmark_text == 'bookmark'){
+            $('#'+bookmark_id).html('bookmark_border');
+        }else{
+            $('#'+bookmark_id).html('bookmark');
+        }
+
+        $.ajax({
+            url: "/content/bookmark",
+            data: {
+                feed_id: feed_id,
+                bookmark_text: bookmark_text,
+            },
+            method: "POST",
+            <!--processData: false,django.db.utils.IntegrityError: NOT NULL constraint failed: User.name 이거 지우니까 이 오류 사라짐-->
+            success: function (data) {
+                console.log("성공");
+            },
+            error: function (request, status, error) {
+                console.log("에러");
+            },
+            complle: function () {
+                console.log("완료");
+            }
+        });
+
+    });
+
+    $('.favorite').click(function (e){
+        let feed_id = e.target.attributes.getNamedItem('feed_id').value;
+        let favorite_id = e.target.id;
+        console.log(favorite_id);
+        let favorite_text = $.trim($('#'+favorite_id).html());
+        console.log(favorite_text);
+        if(favorite_text == 'favorite'){
+            $('#'+favorite_id).html('favorite_border');
+        }else{
+            $('#'+favorite_id).html('favorite');
+        }
+
+        $.ajax({
+            url: "/content/like",
+            data: {
+                feed_id: feed_id,
+                favorite_text: favorite_text,
+            },
+            method: "POST",
+            <!--processData: false,django.db.utils.IntegrityError: NOT NULL constraint failed: User.name 이거 지우니까 이 오류 사라짐-->
+            success: function (data) {
+                console.log("성공");
+            },
+            error: function (request, status, error) {
+                console.log("에러");
+            },
+            complle: function () {
+                console.log("완료");
+            }
+        });
+
+    });
+
+
+
     $('.upload_reply').click(function (e){ <!--e는 어떤 이벤트 콘솔로그로 이벤트를 찍어보면은 클릭했다는 내용이랑 내가 클릭했을 떄 뭘 했고 클릭한게 무엇인지 여러가지 정보들이 담겨있다.10시간 4분쯤-->
         <!--게시 누르면 feed_id 가져오고  그 다음에 reply_id 만들어주고 그거 이용해서 reply_id 값 있는 input 내용 가져오게-->
-        feed_id = e.target.attributes.getNamedItem('feed_id').value;
-        reply_id = 'reply_' +  feed_id;
+        let feed_id = e.target.attributes.getNamedItem('feed_id').value;
+        let reply_id = 'reply_' +  feed_id;
         let reply_content = $('#'+reply_id).val();
         <!--아무것도 없으면 에러를 내야하니까 if문 이용 예외처리-->
 
@@ -352,14 +426,16 @@
         $.ajax({
             url: "/content/reply",
             data: {
-                email : email,
-                password : password,
+                feed_id : feed_id,
+                reply_content : reply_content,
+                <!--사용자 아이디는 views에서 세션으로 가져오니까-->
             },
             method: "POST",
             <!--processData: false,django.db.utils.IntegrityError: NOT NULL constraint failed: User.name 이거 지우니까 이 오류 사라짐-->
             success: function (data) {
                 console.log("성공");
-                alert('로그인 성공')
+                alert('댓글 성공')
+                $('#reply_list_' + feed_id).append("<div style='margin:0 20px;text-align: left; font-size: 14px'><b>{{ user.nickname }}</b>" + reply_content + '</div>')
                 location.replace('/main')
             },
             error: function (request, status, error) {
@@ -367,6 +443,7 @@
             },
             complle: function () {
                 console.log("완료");
+                $('#'+reply_id).val(''); //댓글 내용이 남아있어서 댓글 내용 초기화
             }
         });
     })
