@@ -118,7 +118,7 @@
                              src="{% get_media_prefix %}{{ feed.profile_image }}">
                     </div>
                     <div>
-                        {{ feed.user_id }}
+                        {{ feed.nickname }}
                     </div>
                 </div>
                 <div>
@@ -137,12 +137,17 @@
                 </div>
                 <div style="margin:0 20px;text-align: left; font-size: 14px"> 춘식이 <b>{{ feed.like_count }}명</b>이 좋아합니다.</div>
                 <div style="margin:0 20px;text-align: left; font-size: 16px"><b>{{ feed.user_id }}</b> {{ feed.content }}</div>
-                <div style="margin:0 20px;text-align: left; font-size: 14px"><b>aaaa</b> 나도 제주도 가고싶다</div>
-                <div style="margin:0 20px;text-align: left; font-size: 14px"><b>bbbb</b> 나도 진짜 제주도 가고싶다</div>
+                {% for reply in feed.reply_list %} <!-- feed 안에 reply리스트가 있는데 그걸 하나씩 reply로 꺼내준다 -->
+                    <div style="margin:0 20px;text-align: left; font-size: 14px"><b>{{ reply.nickname }} </b>{{ reply.reply_content }}</div>
+                {% endfor %}
 
-                <div style="border-top: gray "><input type="text" class="form-control"
-                                                      style="box-shadow: none; border: none; outline: none"
-                                                      placeholder="댓글 달기.."></div>
+
+                <div style="display: flex; flex-direction: row;align-items: center; border-top: solid 1px gray">
+                    <input id="reply_{{ feed.id }}" type="text" class="form-control" style="box-shadow: none; border: none; outline: none" placeholder="댓글 달기..">
+                    <div feed_id="{{ feed.id }}" class="upload_reply" style="width: 50px; color: cornflowerblue; font-weight: bold">
+                        게시
+                    </div>
+                </div>
             </div>
             <!--여기까지 피드박스 -->
         {% endfor %}
@@ -331,6 +336,42 @@
 
 <!-- Optional JavaScript; choose one of the two! -->
 <script>
+
+    $('.upload_reply').click(function (e){ <!--e는 어떤 이벤트 콘솔로그로 이벤트를 찍어보면은 클릭했다는 내용이랑 내가 클릭했을 떄 뭘 했고 클릭한게 무엇인지 여러가지 정보들이 담겨있다.10시간 4분쯤-->
+        <!--게시 누르면 feed_id 가져오고  그 다음에 reply_id 만들어주고 그거 이용해서 reply_id 값 있는 input 내용 가져오게-->
+        feed_id = e.target.attributes.getNamedItem('feed_id').value;
+        reply_id = 'reply_' +  feed_id;
+        let reply_content = $('#'+reply_id).val();
+        <!--아무것도 없으면 에러를 내야하니까 if문 이용 예외처리-->
+
+        if(reply_content.length <= 0) {
+            alert('댓글을 입력하세요');
+            return 0;
+        }
+
+        $.ajax({
+            url: "/content/reply",
+            data: {
+                email : email,
+                password : password,
+            },
+            method: "POST",
+            <!--processData: false,django.db.utils.IntegrityError: NOT NULL constraint failed: User.name 이거 지우니까 이 오류 사라짐-->
+            success: function (data) {
+                console.log("성공");
+                alert('로그인 성공')
+                location.replace('/main')
+            },
+            error: function (request, status, error) {
+                console.log("에러");
+            },
+            complle: function () {
+                console.log("완료");
+            }
+        });
+    })
+
+
     let files
 
     $(".modal_close").click(function () {
@@ -404,16 +445,12 @@
                 let file = files[0];
                 let image =files[0].name;
                 let content = $('#input_feed_content').val();
-                let user_id ='{{ user.nickname }}';
-                let profile_image ="{{ user.profile_image }}";
 
                 let fd = new FormData();
 
                 fd.append('file',file);
                 fd.append('image',image);
                 fd.append('content',content);
-                fd.append('user_id',user_id);
-                fd.append('profile_image',profile_image);
                 
                 $.ajax({
                     url:"/content/upload",
@@ -445,7 +482,6 @@
             alert('이미지가 아닙니다.');
             return;
         }
-
     }
 </script>
 
