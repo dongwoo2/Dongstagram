@@ -71,7 +71,7 @@ class UploadFeed(APIView):
         content = request.data.get('content')
         email = request.session.get('email', None) # 세션이 있다는거는 로그인한 증거니까 세션에서 가져오고
 
-        Feed.objects.create(image=image,content=content,email=email,like_count=0)
+        Feed.objects.create(image=image,content=content,email=email,)
         return Response(status=200)
 
 
@@ -89,11 +89,12 @@ class Profile(APIView):
 
         #내가 쓴 피드 리스트들을 보여주어야함
         feed_list = Feed.objects.filter(email=email)
-        like_list = list(Like.objects.filter(email=email, is_like=True).values_list('feed_id', flat=True)) # feed_id 정보를 list로 받고 싶으면 flat을 True로 설정하면 된다.
+        like_list = list(Like.objects.filter(email=email, is_like=True).values_list('feed_id', flat=True)) # feed_id 정보를 list로 받고 싶으면 flat을 True로 설정하면 된다. 내가 좋아요를 누른 피드리스트가 나온다
         print(like_list) # 쿼리셋으로 나오는데 list로 나오게 할려면 list()를 해야한다. 위에 줄 말하는거임 list()안하니까 쿼리셋으로 나옴
-        like_feed_list = Feed.objects.filter(id_in=like_list) # 피드에 있는 id중에 피드 
-
-        return render(request, "content/profile.html", {"user":user, "feed_list":feed_list, "like_feed_list":like_feed_list})
+        like_feed_list = Feed.objects.filter(id__in=like_list) # 피드에 있는 id중에 좋아요 한 애만 걸림
+        bookmark_list = list(Bookmark.objects.filter(email=email, is_marked=True).values_list('feed_id', flat=True))
+        bookmark_feed_list = Feed.objects.filter(id__in=bookmark_list)
+        return render(request, "content/profile.html", {"user":user, "feed_list":feed_list, "like_feed_list":like_feed_list, "bookmark_feed_list":bookmark_feed_list})
 
 
 class UploadReply(APIView):
